@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<title>独立域名与客户品牌方案 — 可行性评估与技术方案</title>
+<style>
+  @font-face {
+    font-family: "DocHei";
+    src: url("file:///usr/share/fonts/truetype/wqy/wqy-microhei.ttc");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "DocMono";
+    src: url("file:///usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Regular.ttf");
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  :root {
+    --ink: #1c1917;
+    --muted: #57534e;
+    --faint: #a8a29e;
+    --line: #e7e5e4;
+    --line-strong: #d6d3d1;
+    --navy: #1e3a5f;
+    --soft: #f5f5f4;
+  }
+
+  * { box-sizing: border-box; }
+
+  @page {
+    size: A4;
+    margin: 16mm 18mm 18mm 18mm;
+  }
+  @page:first {
+    margin-top: 14mm;
+  }
+
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "DocHei", "WenQuanYi Micro Hei", "Droid Sans Fallback", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+
+  p { margin: 0 0 7px; orphans: 3; widows: 3; }
+  strong { font-weight: 400; color: var(--navy); }
+
+  .mast {
+    border-top: 4px solid var(--navy);
+    padding-top: 12px;
+    margin-bottom: 4px;
+  }
+  .kicker {
+    margin: 0;
+    color: var(--navy);
+    font-size: 9.5pt;
+    line-height: 1.4;
+  }
+  h1 {
+    margin: 3px 0 8px;
+    font-size: 22pt;
+    line-height: 1.28;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+  }
+  .lede {
+    margin: 0;
+    font-size: 11pt;
+    line-height: 1.7;
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 14px 0 2px;
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .meta div {
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    column-gap: 10px;
+    padding: 6px 16px 6px 0;
+    line-height: 1.45;
+  }
+  .meta div:nth-child(-n+2) {
+    border-bottom: 1px solid var(--line);
+  }
+  .meta dt { margin: 0; color: var(--muted); }
+  .meta dd { margin: 0; }
+  .meta dd.yes { color: var(--navy); }
+
+  h2 {
+    margin: 18px 0 8px;
+    padding-top: 8px;
+    border-top: 1.5px solid var(--navy);
+    font-size: 13.5pt;
+    line-height: 1.35;
+    font-weight: 400;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  h2 .no {
+    color: var(--navy);
+    margin-right: 8px;
+  }
+  h3 {
+    margin: 13px 0 4px;
+    font-size: 11.5pt;
+    line-height: 1.4;
+    font-weight: 400;
+    color: var(--navy);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 10px;
+    font-size: 9.5pt;
+    line-height: 1.55;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  th {
+    text-align: left;
+    font-weight: 400;
+    color: var(--navy);
+    border-bottom: 1px solid var(--navy);
+    padding: 3px 10px 4px 0;
+    vertical-align: bottom;
+  }
+  td {
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+    padding: 5px 10px 5px 0;
+  }
+  td:last-child, th:last-child { padding-right: 0; }
+  code {
+    font-family: "DocMono", "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.9em;
+  }
+
+  .note {
+    margin: 8px 0 4px;
+    padding: 7px 12px;
+    background: var(--soft);
+    border-left: 3px solid var(--navy);
+    font-size: 10pt;
+    line-height: 1.65;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .note .label {
+    color: var(--navy);
+    margin-right: 6px;
+  }
+
+  ol.reqs {
+    list-style: none;
+    margin: 2px 0 0;
+    padding: 0;
+  }
+  ol.reqs > li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    column-gap: 6px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  ol.reqs > li::before {
+    content: counter(req, decimal-leading-zero);
+    counter-increment: req;
+    color: var(--navy);
+    padding-top: 1px;
+  }
+  ol.reqs { counter-reset: req; }
+  .req-title {
+    margin: 0 0 1px;
+    color: var(--ink);
+  }
+  ol.reqs p { margin: 0; color: var(--ink); }
+
+  ol.flow {
+    list-style: none;
+    margin: 4px 0 12px;
+    padding: 2px 0 2px 0;
+    border-left: 2px solid var(--navy);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  ol.flow li {
+    position: relative;
+    padding: 0 0 9px 14px;
+    line-height: 1.55;
+  }
+  ol.flow li:last-child { padding-bottom: 0; }
+  ol.flow li::before {
+    content: "";
+    position: absolute;
+    left: -4.5px;
+    top: 0.42em;
+    width: 7px;
+    height: 7px;
+    background: var(--navy);
+    border-radius: 50%;
+  }
+  .ft { color: var(--navy); }
+
+  .outcomes {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 14px;
+    margin: 2px 0 6px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .outcomes div {
+    border-top: 2px solid var(--navy);
+    padding-top: 5px;
+  }
+  .outcomes .tag {
+    margin: 0 0 2px;
+    color: var(--navy);
+  }
+  .outcomes p { margin: 0; font-size: 10pt; line-height: 1.55; }
+
+  ul.plain {
+    margin: 2px 0 8px;
+    padding-left: 1.15em;
+  }
+  ul.plain li { margin: 1px 0; padding-left: 2px; }
+  ul.plain li::marker { color: var(--navy); }
+
+  .caption {
+    margin: 8px 0 4px;
+    color: var(--muted);
+    font-size: 9pt;
+    line-height: 1.45;
+  }
+  pre {
+    margin: 0 0 8px;
+    padding: 9px 12px;
+    background: var(--soft);
+    border-left: 3px solid var(--navy);
+    font-family: "DocMono", "JetBrains Mono", ui-monospace, monospace;
+    font-size: 8pt;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .risk {
+    padding: 7px 0 8px;
+    border-bottom: 1px solid var(--line);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .risk h3 { margin: 0 0 2px; }
+  .tag-word {
+    display: inline-block;
+    margin-right: 6px;
+    color: var(--muted);
+    font-size: 9.5pt;
+  }
+  .endnote {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 9.5pt;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <p class="kicker">可行性评估与技术方案</p>
+  <h1>独立域名与客户品牌方案</h1>
+  <p class="lede">新客户使用自己的域名访问现有系统。登录页展示该客户的 Logo、系统名称和浏览器标签图标。应用和数据库继续共用，为客户创建独立租户，并把域名绑定到该租户。</p>
+</header>
+
+<dl class="meta">
+  <div><dt>日期</dt><dd>2026年11月12日</dd></div>
+  <div><dt>文档性质</dt><dd>可行性评估与技术方案</dd></div>
+  <div><dt>需求来源</dt><dd>客户《独立域名与客户品牌方案》</dd></div>
+  <div><dt>评估结论</dt><dd class="yes">可以实现</dd></div>
+</dl>
+
+<h2><span class="no">01</span>结论</h2>
+<p>可以实现。新客户继续使用现在这一套应用和数据库。为客户创建独立租户，把客户域名绑定到该租户；用户从该域名进入时，系统切换到对应的品牌，并只接受该租户的账号登录。原域名和现有客户的使用方式保持不变。</p>
+<p>未列入配置的域名在反向代理层拒绝，请求不进入应用，页面上不会出现其他客户的品牌或数据。</p>
+
+<table>
+  <thead>
+    <tr><th style="width:50%">继续沿用</th><th>本次增加</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>现有应用与数据库</td><td>租户品牌配置：域名、系统名称、登录页 Logo、浏览器图标</td></tr>
+    <tr><td>原域名的登录方式</td><td>按网关校验后的访问域名识别租户</td></tr>
+    <tr><td>现有租户与企业权限</td><td>客户域名上的账号、会话和跳转限制</td></tr>
+    <tr><td>单套服务的部署方式</td><td>反向代理中的客户域名与 HTTPS 证书</td></tr>
+    <tr><td>平台管理员维护配置</td><td>上传和修改的审计记录</td></tr>
+  </tbody>
+</table>
+
+<p class="note"><span class="label">说明</span>本方案依据需求说明里描述的现状编写：系统已有租户与企业权限、云盘链接、认证回调和网关。编写时没有对照业务代码逐项核对。看到代码后，需要把本文的设计落到具体的表、接口和调用点上。</p>
+
+<h2><span class="no">02</span>需求提炼</h2>
+<p>下面八条覆盖客户说明中的方案概述和五项主要改动。</p>
+<ol class="reqs">
+  <li>
+    <div>
+      <p class="req-title">独立域名，系统继续共用</p>
+      <p>新客户用自己的域名访问。系统仍共用现有应用和数据库，为该客户创建独立租户，并把域名绑定到这个租户。</p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <p class="req-title">登录页展示客户品牌</p>
+      <p>登录页显示客户 Logo、系统名称和浏览器标签图标。</p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <p class="req-title">品牌配置由平台管理员维护</p>
+      <p>保存客户域名、系统名称、登录页 Logo 和浏览器图标。上传和修改留下审计记录。</p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <p class="req-title">客户域名只接受本租户账号</p>
+      <p>新客户域名仅接受绑定租户的账号。登录、退出和跳转始终留在当前域名。原域名的登录方式保留。</p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <p class="req-title">按校验后的域名加载品牌</p>
+      <p>品牌根据经过网关校验的访问域名加载。未配置的域名不展示其他客户的品牌或数据。</p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <p class="req-title">绝对地址兼容客户域名</p>
+      <p>会生成完整网址的功能要能用在客户域名上，其中包括云盘链接和认证回调。</p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <p class="req-title">沿用现有权限，并验证隔离</p>
+      <p>继续使用现有的租户及企业权限控制，针对文件和接口检查隔离是否生效。</p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <p class="req-title">解析到现有服务，只信任代理传入的域名</p>
+      <p>客户域名解析到现有服务。在反向代理中配置域名和 HTTPS 证书。应用只信任由代理传入的域名信息，避免伪造的请求头生效。</p>
+    </div>
+  </li>
+</ol>
+
+<h2><span class="no">03</span>技术方案</h2>
+
+<h3>3.1　请求如何进入系统</h3>
+<p>需求里的网关由现有反向代理承担。代理先确认域名在配置内，再把域名交给应用。应用按域名找到租户，品牌、登录和业务接口都读这个结果。数据仍写在现有数据库里，按租户隔离。</p>
+<ol class="flow">
+  <li><span class="ft">客户域名。</span>以 CNAME 指向现有服务。</li>
+  <li><span class="ft">反向代理。</span>完成 HTTPS，核对域名是否已配置，覆盖写入域名请求头。</li>
+  <li><span class="ft">域名中间件。</span>放在全部业务逻辑之前，按域名解析租户并写入请求上下文。</li>
+  <li><span class="ft">业务处理。</span>品牌展示、登录校验、文件和接口访问都使用该租户上下文。</li>
+  <li><span class="ft">数据。</span>现有数据库。读写继续走现有的租户与企业权限。</li>
+</ol>
+<p>域名分三种处理。</p>
+<div class="outcomes">
+  <div>
+    <p class="tag">原域名</p>
+    <p>走现有登录和默认品牌。现有客户的用法不变。</p>
+  </div>
+  <div>
+    <p class="tag">已绑定的客户域名</p>
+    <p>进入对应租户，展示该客户的品牌，只接受该租户账号。</p>
+  </div>
+  <div>
+    <p class="tag">未配置的域名</p>
+    <p>在代理层拒绝，请求不进入应用。</p>
+  </div>
+</div>
+
+<h3>3.2　数据模型</h3>
+<p>品牌与域名分开存放。一个租户可以绑定多个域名，一个域名只属于一个租户。</p>
+<table>
+  <thead>
+    <tr><th style="width:34%">租户品牌</th><th>说明</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>tenant_id</code></td><td>关联现有租户，一条租户一条品牌配置</td></tr>
+    <tr><td><code>system_name</code></td><td>系统名称，用于登录页和浏览器标题</td></tr>
+    <tr><td><code>logo_url</code></td><td>登录页 Logo 的访问地址</td></tr>
+    <tr><td><code>favicon_url</code></td><td>浏览器标签图标的访问地址</td></tr>
+    <tr><td><code>enabled</code></td><td>是否启用</td></tr>
+    <tr><td>维护信息</td><td>创建人、修改人、创建时间、修改时间</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead>
+    <tr><th style="width:34%">租户域名</th><th>说明</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>domain</code></td><td>客户域名。小写保存，唯一。不含协议、路径和端口</td></tr>
+    <tr><td><code>tenant_id</code></td><td>绑定的租户</td></tr>
+    <tr><td><code>enabled</code></td><td>该域名是否生效</td></tr>
+  </tbody>
+</table>
+<p>Logo 和图标文件放进现有文件服务，数据库只记录地址。另建审计表，记录操作人、时间、动作（新增、修改、停用），以及修改前后的内容。</p>
+
+<h3>3.3　域名识别</h3>
+<ul class="plain">
+  <li>反向代理用覆盖的方式写入 <code>Host</code> 和 <code>X-Forwarded-Host</code>，不用追加，避免客户端自带的值残留。</li>
+  <li>应用端口只接受反向代理的连接，不直接对公网开放。应用只采用代理写入的域名。</li>
+  <li>中间件放在全部业务逻辑之前。比较前把域名转成小写，不把协议、路径和端口算进去。</li>
+  <li>解析结果可以缓存。品牌或域名保存后，删除对应域名的缓存。</li>
+  <li>原域名不查客户品牌，继续走现有逻辑。</li>
+</ul>
+
+<h3>3.4　品牌加载</h3>
+<ul class="plain">
+  <li>提供一个免登录接口，按当前域名返回系统名称、Logo 地址和图标地址。原域名返回默认品牌。</li>
+  <li>这个接口只返回展示用的字段。</li>
+  <li>页面标题和图标在服务端输出 HTML 时写入，避免先闪出默认品牌再替换。</li>
+  <li>上传只接受 PNG、JPEG、ICO，并限制文件大小。不接受 SVG，避免文件中携带脚本。</li>
+</ul>
+
+<h3>3.5　登录与会话</h3>
+<ul class="plain">
+  <li>在客户域名下，账号所属租户必须和该域名绑定的租户相同。</li>
+  <li>不匹配时，返回与密码错误相同的提示，不单独透露账号是否存在。</li>
+  <li>会话中记录租户。之后每个请求都核对：会话里的租户与当前域名的租户一致。</li>
+  <li>Cookie 不设置 Domain，只发给当前主机，避免被其他域名带上。</li>
+  <li>登录成功、退出、未登录时的跳转使用相对路径。回跳地址只接受以单个斜杠开头的站内路径。</li>
+</ul>
+
+<h3>3.6　绝对地址</h3>
+<p>增加一个统一的取站点根地址的方法。根地址只从本次请求里已经校验过的域名拼出，形式为 <code>https://当前域名</code>。代码里写死的站点域名改为调用这个方法。需要排查的位置：</p>
+<ul class="plain">
+  <li>云盘的分享链接和下载链接</li>
+  <li>认证回调地址</li>
+  <li>邮件、短信里的链接</li>
+  <li>跨域白名单、CSRF 来源校验、WebSocket 来源校验</li>
+  <li>文件和 CDN 地址</li>
+</ul>
+
+<h3>3.7　反向代理与证书</h3>
+<p class="caption">示例为 Nginx。换成其他反向代理时，保持同样三条：覆盖域名头、拒绝未配置的域名、应用不直接暴露。</p>
+<pre>server {
+    listen 443 ssl;
+    server_name app.customer.com;
+
+    ssl_certificate     /path/customer.crt;
+    ssl_certificate_key /path/customer.key;
+
+    location / {
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://app_upstream;
+    }
+}
+
+server {
+    listen 443 ssl default_server;
+    ssl_reject_handshake on;
+}</pre>
+<ul class="plain">
+  <li>客户把域名用 CNAME 指到现有服务。</li>
+  <li><code>X-Forwarded-Host</code> 由 <code>proxy_set_header</code> 覆盖写入。</li>
+  <li>未配置的域名由 <code>default_server</code> 拒绝 TLS 握手。</li>
+  <li>证书可以由客户提供，也可以由服务端通过 ACME 自动签发和续期。</li>
+</ul>
+
+<h3>3.8　隔离验证</h3>
+<p>上线前跑完下面的用例。前五条用来确认客户之间互不可见，最后一条确认现有客户不受影响。</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width:10%">编号</th>
+      <th style="width:46%">操作</th>
+      <th>期望</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>T1</td>
+      <td>租户 A 的账号在租户 B 的域名上登录</td>
+      <td>登录失败。提示与密码错误相同</td>
+    </tr>
+    <tr>
+      <td>T2</td>
+      <td>把原域名签发的会话拿到客户域名上访问接口</td>
+      <td>请求被拒绝</td>
+    </tr>
+    <tr>
+      <td>T3</td>
+      <td>用客户域名的会话，按标识访问其他租户的文件和接口</td>
+      <td>请求被拒绝，不返回对方数据</td>
+    </tr>
+    <tr>
+      <td>T4</td>
+      <td>不经过代理，直接携带伪造的 Host 或 X-Forwarded-Host 访问应用</td>
+      <td>连接不被接受，伪造的域名头不生效</td>
+    </tr>
+    <tr>
+      <td>T5</td>
+      <td>使用未配置的域名访问</td>
+      <td>代理层拒绝。响应中不出现任何客户的品牌或数据</td>
+    </tr>
+    <tr>
+      <td>T6</td>
+      <td>现有客户从原域名登录，使用云盘，走认证回调</td>
+      <td>行为与现在一致</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.9　实施顺序</h3>
+<table>
+  <thead>
+    <tr>
+      <th style="width:12%">顺序</th>
+      <th style="width:28%">工作</th>
+      <th>完成标志</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>数据与域名入口</td>
+      <td>品牌表、域名表、审计表可用。请求能按域名解析到租户，未配置域名进不了应用</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>登录页品牌</td>
+      <td>用客户域名打开登录页，立即显示该客户的名称、Logo 和图标</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>登录与会话</td>
+      <td>其他租户的账号不能在该域名登录。登录、退出和跳转不离开当前域名</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>绝对地址</td>
+      <td>云盘链接、认证回调和消息链接使用当前域名</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>管理与审计</td>
+      <td>平台管理员可以维护品牌和域名。上传与修改写入审计</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>上线与回归</td>
+      <td>证书和代理生效。第 3.8 节用例通过。原域名流程回归通过</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="no">04</span>风险与待确认</h2>
+
+<div class="risk">
+  <h3><span class="tag-word">待确认</span>第三方登录的回调域名</h3>
+  <p>如果现有登录接了微信、钉钉或企业 SSO，对方平台通常要求事先登记回调地址。客户域名需要逐个登记；或者统一回调到原域名，再用一次性票据跳回客户域名。两条路的改动范围不同，要按现有登录方式选定。这是最可能超出本文范围的一块。</p>
+</div>
+<div class="risk">
+  <h3><span class="tag-word">待确认</span>新客户账号能否从原域名登录</h3>
+  <p>需求写明了客户域名只接受该租户的账号，没有写该租户的账号是否仍可从原域名登录。两种做法的账号入口不同，需要客户确认。</p>
+</div>
+<div class="risk">
+  <h3><span class="tag-word">风险</span>现有接口的租户过滤是否完整</h3>
+  <p>本方案依赖现有的租户和企业权限。独立域名不能补上接口里漏掉的租户条件。第 3.8 节的 T3 用来把这类遗漏找出来，找到后在对应接口补上租户条件。</p>
+</div>
+<div class="risk">
+  <h3><span class="tag-word">待确认</span>证书由谁申请、由谁续期</h3>
+  <p>证书可以由客户提供，也可以由服务端用 ACME 自动签发和续期。这决定上线步骤和日后的运维责任，需要在配置第一个客户域名之前定下来。</p>
+</div>
+
+<p class="endnote">看到业务代码之后，对照本文核对登录与会话的实现、绝对地址的生成位置、现有租户模型，以及网关配置，再列出具体的改动文件、接口和表结构。</p>
+
+</body>
+</html>
